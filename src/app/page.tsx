@@ -1,18 +1,27 @@
 import { prisma } from "@/lib/prisma";
 import PostCard from "@/components/blog/PostCard";
 import Link from "next/link";
+import HighlightsSection from "@/components/home/HighlightsSection";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
   let recentPosts: { id: string; slug: string; title: string; excerpt: string; publishedAt: Date | null }[] = [];
+  let highlights: { id: string; title: string; description: string | null; type: string; url: string | null; date: Date | null }[] = [];
   try {
-    recentPosts = await prisma.post.findMany({
-      where: { published: true },
-      orderBy: { publishedAt: "desc" },
-      take: 3,
-      select: { id: true, slug: true, title: true, excerpt: true, publishedAt: true },
-    });
+    [recentPosts, highlights] = await Promise.all([
+      prisma.post.findMany({
+        where: { published: true },
+        orderBy: { publishedAt: "desc" },
+        take: 3,
+        select: { id: true, slug: true, title: true, excerpt: true, publishedAt: true },
+      }),
+      prisma.highlight.findMany({
+        where: { published: true },
+        orderBy: [{ order: "asc" }, { date: "desc" }],
+        select: { id: true, title: true, description: true, type: true, url: true, date: true },
+      }),
+    ]);
   } catch {
     // DB not available during build — ISR will hydrate on first request
   }
@@ -92,6 +101,9 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+
+      {/* Highlights */}
+      {highlights.length > 0 && <HighlightsSection highlights={highlights} />}
 
       {/* SCALE Framework callout */}
       <section className="bg-white border-t border-gray-200">
