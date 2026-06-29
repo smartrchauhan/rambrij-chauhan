@@ -26,7 +26,7 @@ export default async function Navbar() {
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          {session ? (
+          {session?.user ? (
             <>
               <span className="text-sm text-gray-600">Hi, {session.user.name?.split(" ")[0]}</span>
               {session.user.role === "ADMIN" && (
