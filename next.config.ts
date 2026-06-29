@@ -24,6 +24,17 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Bake env vars at build time so they are available in the Lambda runtime
+  // (Amplify WEB_COMPUTE does not reliably pass env vars to the SSR Lambda)
+  env: {
+    AUTH_SECRET: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? "",
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? "",
+    AUTH_TRUST_HOST: "true",
+    AUTH_URL: process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? "",
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "",
+    DATABASE_URL: process.env.DATABASE_URL ?? "",
+    DIRECT_DATABASE_URL: process.env.DIRECT_DATABASE_URL ?? "",
+  },
   async headers() {
     return [
       {

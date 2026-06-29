@@ -10,6 +10,7 @@ const credentialsSchema = z.object({
 });
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   providers: [
     Credentials({
       async authorize(credentials) {
@@ -48,4 +49,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/auth/login",
   },
   session: { strategy: "jwt", maxAge: 60 * 60 },
+  trustHost: true,
 });
