@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import TurnstileWidget, { SITE_KEY, type TurnstileWidgetHandle } from "./TurnstileWidget";
 
 export default function LoginForm() {
@@ -93,10 +92,6 @@ export default function LoginForm() {
         className="w-full rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50 transition-colors cursor-pointer">
         {loading ? "Signing in…" : "Sign In"}
       </button>
-      <p className="text-center text-sm text-gray-600">
-        Don&apos;t have an account?{" "}
-        <Link href="/auth/register" className="text-blue-700 hover:underline font-medium">Register</Link>
-      </p>
     </form>
   );
 }
