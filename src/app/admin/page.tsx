@@ -12,7 +12,7 @@ export default async function AdminDashboard() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Posts</h1>
         <Link
-          href="/admin/posts/new"
+          href="/admin/posts/editor"
           className="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
         >
           + New Post
@@ -51,7 +51,7 @@ export default async function AdminDashboard() {
                     {new Date(post.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 flex gap-3">
-                    <Link href={`/admin/posts/${post.id}/edit`} className="text-blue-600 hover:underline">
+                    <Link href={`/admin/posts/editor/${post.id}`} className="text-blue-600 hover:underline">
                       Edit
                     </Link>
                     <Link href={`/blog/${post.slug}`} className="text-gray-500 hover:underline">

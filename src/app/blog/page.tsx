@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import PostCard from "@/components/blog/PostCard";
+import BlogListClient from "@/components/blog/BlogListClient";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { readingTime } from "@/lib/reading-time";
 
 export const revalidate = 60;
 
@@ -10,70 +12,101 @@ export const metadata: Metadata = {
   description: "Articles on software architecture, performance engineering, cloud-native systems, and AI.",
 };
 
-interface PageProps {
-  searchParams: Promise<{ page?: string }>;
+interface Post {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverUrl: string | null;
+  tags: string | null;
+  publishedAt: Date | null;
 }
 
-export default async function BlogPage({ searchParams }: PageProps) {
-  const { page: pageParam } = await searchParams;
-  const page = Math.max(1, Number(pageParam ?? 1));
-  const limit = 9;
-  const skip = (page - 1) * limit;
-
-  let posts: { id: string; slug: string; title: string; excerpt: string; publishedAt: Date | null }[] = [];
-  let total = 0;
+export default async function BlogPage() {
+  let posts: Post[] = [];
 
   try {
-    [posts, total] = await Promise.all([
-      prisma.post.findMany({
-        where: { published: true },
-        orderBy: { publishedAt: "desc" },
-        skip,
-        take: limit,
-        select: { id: true, slug: true, title: true, excerpt: true, publishedAt: true },
-      }),
-      prisma.post.count({ where: { published: true } }),
-    ]);
+    posts = await prisma.post.findMany({
+      where: { published: true },
+      orderBy: { publishedAt: "desc" },
+      select: { id: true, slug: true, title: true, excerpt: true, content: true, coverUrl: true, tags: true, publishedAt: true },
+    });
   } catch {
     // DB not available during build — ISR will hydrate on first request
   }
 
-  const totalPages = Math.ceil(total / limit);
+  if (posts.length === 0) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 py-16">
+        <h1 className="mb-2 text-4xl font-bold text-gray-900">Blog</h1>
+        <p className="text-gray-500 mt-8">No articles published yet. Check back soon!</p>
+      </main>
+    );
+  }
+
+  const [featured, ...rest] = posts;
+  const featuredMinutes = readingTime(featured.content);
+  const featuredDate = featured.publishedAt
+    ? new Date(featured.publishedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+    : null;
+  const featuredTags = featured.tags ? featured.tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
+
+  // Collect all unique tags across all posts
+  const allTags = Array.from(
+    new Set(posts.flatMap((p) => (p.tags ? p.tags.split(",").map((t) => t.trim()).filter(Boolean) : [])))
+  ).sort();
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-16">
-      <h1 className="mb-2 text-4xl font-bold text-gray-900">Blog</h1>
-      <p className="mb-12 text-lg text-gray-500">
-        Practical insights on software architecture, performance engineering, and cloud-native systems.
-      </p>
-
-      {posts.length === 0 ? (
-        <p className="text-gray-500">No articles published yet. Check back soon!</p>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => (
-            <PostCard key={post.id} {...post} />
-          ))}
+      <div className="mb-12">
+        <h1 className="mb-2 text-4xl font-bold text-gray-900">Blog</h1>
+        <p className="text-lg text-gray-500">
+          Practical insights on software architecture, performance engineering, and cloud-native systems.
+        </p>
+        <div className="mt-3 flex items-center gap-2 text-sm text-gray-400">
+          <Link href="/blog/rss.xml" className="hover:text-orange-500 transition-colors flex items-center gap-1">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
+            RSS
+          </Link>
         </div>
-      )}
+      </div>
 
-      {totalPages > 1 && (
-        <nav className="mt-12 flex items-center justify-center gap-4">
-          {page > 1 && (
-            <Link href={`/blog?page=${page - 1}`} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50">
-              ← Previous
-            </Link>
+      {/* Featured post */}
+      <Link href={`/blog/${featured.slug}`} className="group block mb-12 rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg transition-shadow">
+        <div className="grid md:grid-cols-2 gap-0">
+          {featured.coverUrl ? (
+            <div className="aspect-video md:aspect-auto overflow-hidden bg-gray-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={featured.coverUrl} alt={featured.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            </div>
+          ) : (
+            <div className="aspect-video md:aspect-auto bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
+              <span className="text-7xl font-black text-white/20 select-none">{featured.title.charAt(0)}</span>
+            </div>
           )}
-          <span className="text-sm text-gray-500">
-            Page {page} of {totalPages}
-          </span>
-          {page < totalPages && (
-            <Link href={`/blog?page=${page + 1}`} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50">
-              Next →
-            </Link>
-          )}
-        </nav>
-      )}
+          <div className="p-8 flex flex-col justify-center bg-white">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="rounded-full bg-blue-700 px-2.5 py-0.5 text-xs font-semibold text-white">Featured</span>
+              {featuredTags.slice(0, 2).map((tag) => (
+                <span key={tag} className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">{tag}</span>
+              ))}
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors leading-tight mb-3">
+              {featured.title}
+            </h2>
+            <p className="text-gray-500 leading-relaxed line-clamp-3 mb-4">{featured.excerpt}</p>
+            <div className="flex items-center gap-3 text-xs text-gray-400">
+              {featuredDate && <time>{featuredDate}</time>}
+              <span>·</span>
+              <span>{featuredMinutes} min read</span>
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      {/* Tag filter + grid — client component */}
+      <BlogListClient posts={rest} allTags={allTags} />
     </main>
   );
 }
