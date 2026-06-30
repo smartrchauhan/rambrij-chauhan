@@ -42,9 +42,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { title, excerpt, content, published } = parsed.data;
+  const { title, excerpt, content, coverUrl, tags, published } = parsed.data;
 
-  const htmlContent = sanitizeBlogContent(await marked(content));
+  const htmlContent = sanitizeBlogContent(
+    content.trimStart().startsWith("<") ? content : await marked(content)
+  );
 
   let slug = slugify(title, { lower: true, strict: true });
   const existing = await prisma.post.findUnique({ where: { slug } });
@@ -56,6 +58,8 @@ export async function POST(req: NextRequest) {
       title,
       excerpt,
       content: htmlContent,
+      coverUrl: coverUrl || null,
+      tags: tags || null,
       published,
       publishedAt: published ? new Date() : null,
     },
