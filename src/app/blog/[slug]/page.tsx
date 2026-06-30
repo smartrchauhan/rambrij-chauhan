@@ -7,7 +7,7 @@ import ShareButtons from "@/components/blog/ShareButtons";
 import { auth } from "@/auth";
 import { readingTime } from "@/lib/reading-time";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -38,15 +38,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       images: post.coverUrl ? [post.coverUrl] : [],
     },
   };
-}
-
-export async function generateStaticParams() {
-  try {
-    const posts = await prisma.post.findMany({ where: { published: true }, select: { slug: true } });
-    return posts.map((p) => ({ slug: p.slug }));
-  } catch {
-    return [];
-  }
 }
 
 export default async function BlogPostPage({ params }: Params) {
