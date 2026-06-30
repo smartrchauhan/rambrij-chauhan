@@ -7,13 +7,23 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id: postId } = await params;
-  const reactions = await prisma.reaction.groupBy({
-    by: ["type"],
-    where: { postId },
-    _count: { type: true },
-  });
+
+  const session = await (await import("@/auth")).auth();
+  const userId = session?.user?.id;
+
+  const [reactions, userReactions] = await Promise.all([
+    prisma.reaction.groupBy({
+      by: ["type"],
+      where: { postId },
+      _count: { type: true },
+    }),
+    userId
+      ? prisma.reaction.findMany({ where: { postId, userId }, select: { type: true } })
+      : Promise.resolve([]),
+  ]);
+
   const counts = Object.fromEntries(reactions.map((r: { type: string; _count: { type: number } }) => [r.type, r._count.type]));
-  return NextResponse.json(counts);
+  return NextResponse.json({ counts, userReactions: userReactions.map((r: { type: string }) => r.type) });
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
