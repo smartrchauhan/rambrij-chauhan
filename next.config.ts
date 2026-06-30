@@ -13,17 +13,25 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://platform.linkedin.com https://static.licdn.com https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https:",
-      "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self'",
+      "img-src 'self' data: https: https://img.youtube.com https://rambrij-uploads.s3.us-east-1.amazonaws.com",
+      "font-src 'self' https://fonts.gstatic.com https://static.licdn.com",
+      "connect-src 'self' https://*.amazonaws.com https://*.linkedin.com https://*.licdn.com https://api.microlink.io https://challenges.cloudflare.com",
+      "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.linkedin.com https://docs.google.com https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
     ].join("; "),
   },
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "rambrij-uploads.s3.us-east-1.amazonaws.com" },
+      { protocol: "https", hostname: "img.youtube.com" },
+      { protocol: "https", hostname: "logo.clearbit.com" },
+    ],
+  },
   // Bake env vars at build time so they are available in the Lambda runtime
   // (Amplify WEB_COMPUTE does not reliably pass env vars to the SSR Lambda)
   env: {
@@ -34,6 +42,11 @@ const nextConfig: NextConfig = {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "",
     DATABASE_URL: process.env.DATABASE_URL ?? "",
     DIRECT_DATABASE_URL: process.env.DIRECT_DATABASE_URL ?? "",
+    APP_AWS_ACCESS_KEY_ID: process.env.APP_AWS_ACCESS_KEY_ID ?? "",
+    APP_AWS_SECRET_ACCESS_KEY: process.env.APP_AWS_SECRET_ACCESS_KEY ?? "",
+    APP_AWS_REGION: process.env.APP_AWS_REGION ?? "us-east-1",
+    APP_S3_BUCKET: process.env.APP_S3_BUCKET ?? "rambrij-uploads",
+    UPLOAD_PREFIX: process.env.UPLOAD_PREFIX ?? "local",
   },
   async headers() {
     return [
