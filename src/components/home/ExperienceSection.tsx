@@ -103,10 +103,23 @@ export default function ExperienceSection({ initialData, isAdmin }: { initialDat
                 ))}
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Company Logo URL <span className="text-slate-400">(optional)</span></label>
-                <input value={job.logoUrl ?? ""} onChange={(e) => update(i, { logoUrl: e.target.value })}
+                <label className="block text-xs font-medium text-slate-600 mb-1">Company Domain <span className="text-slate-400">(optional — for logo)</span></label>
+                <input
+                  value={job.logoUrl ?? ""}
+                  onChange={(e) => {
+                    const raw = e.target.value.trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0];
+                    update(i, { logoUrl: raw });
+                  }}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="https://www.google.com/s2/favicons?domain=capitalone.com&sz=64" />
+                  placeholder="capitalone.com"
+                />
+                {job.logoUrl && !job.logoUrl.startsWith("http") && (
+                  <div className="mt-1.5 flex items-center gap-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`https://www.google.com/s2/favicons?domain=${job.logoUrl}&sz=64`} alt="" className="h-5 w-5 object-contain" />
+                    <span className="text-xs text-slate-400">Preview</span>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
@@ -145,7 +158,11 @@ export default function ExperienceSection({ initialData, isAdmin }: { initialDat
                 <div className="mt-0.5 h-10 w-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
                   {job.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={job.logoUrl} alt={job.company} className="h-8 w-8 object-contain" />
+                    <img
+                      src={job.logoUrl.startsWith("http") ? job.logoUrl : `https://www.google.com/s2/favicons?domain=${job.logoUrl}&sz=64`}
+                      alt={job.company}
+                      className="h-8 w-8 object-contain"
+                    />
                   ) : (
                     <span className="text-sm font-bold text-slate-600">{job.company[0]?.toUpperCase()}</span>
                   )}
