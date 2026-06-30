@@ -60,16 +60,14 @@ export default async function BlogPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-16">
       <div className="mb-12">
-        <h1 className="mb-2 text-4xl font-bold text-gray-900">Blog</h1>
-        <p className="text-lg text-gray-500">
-          Practical insights on software architecture, performance engineering, and cloud-native systems.
+        <h1 className="mb-3 text-4xl font-bold text-gray-900">Blog</h1>
+        <p className="text-lg text-gray-600 leading-relaxed">
+          Deep dives into{" "}
+          <span className="font-semibold text-blue-700">software architecture</span>,{" "}
+          <span className="font-semibold text-blue-700">performance engineering</span>, and{" "}
+          <span className="font-semibold text-blue-700">cloud-native systems</span>{" "}
+          — written from the trenches of large-scale engineering.
         </p>
-        <div className="mt-3 flex items-center gap-2 text-sm text-gray-400">
-          <Link href="/blog/rss.xml" className="hover:text-orange-500 transition-colors flex items-center gap-1">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
-            RSS
-          </Link>
-        </div>
       </div>
 
       {/* Featured post */}

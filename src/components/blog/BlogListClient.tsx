@@ -47,9 +47,10 @@ export default function BlogListClient({ posts, allTags }: { posts: Post[]; allT
         </div>
       )}
 
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && activeTag && (
         <p className="text-gray-500 py-8">No posts in this category yet.</p>
-      ) : (
+      )}
+      {filtered.length > 0 && (
         <div className="grid gap-6 sm:grid-cols-2">
           {filtered.map((post) => (
             <PostCard

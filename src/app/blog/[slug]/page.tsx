@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import CommentSection from "@/components/blog/CommentSection";
-import ReactionBar from "@/components/blog/ReactionBar";
 import BlogContent from "@/components/blog/BlogContent";
 import ShareButtons from "@/components/blog/ShareButtons";
 import { auth } from "@/auth";
@@ -23,9 +22,20 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     title: `${post.title} — Ram Brij`,
     description: post.excerpt,
     openGraph: {
+      type: "article",
       title: post.title,
       description: post.excerpt,
-      images: post.coverUrl ? [{ url: post.coverUrl }] : [],
+      siteName: "Ram Brij",
+      url: `https://rambrij.com/blog/${slug}`,
+      images: post.coverUrl
+        ? [{ url: post.coverUrl, width: 1200, height: 630, alt: post.title }]
+        : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images: post.coverUrl ? [post.coverUrl] : [],
     },
   };
 }
@@ -64,18 +74,18 @@ export default async function BlogPostPage({ params }: Params) {
     <main>
       {/* Cover hero */}
       {post.coverUrl && (
-        <div className="w-full" style={{ maxHeight: 420, overflow: "hidden" }}>
+        <div className="w-full bg-gray-50 border-b border-gray-100 flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={post.coverUrl}
             alt={post.title}
-            className="w-full object-cover"
-            style={{ maxHeight: 420 }}
+            className="w-full h-auto block"
+            style={{ maxHeight: 480, objectFit: "contain", objectPosition: "center" }}
           />
         </div>
       )}
 
-      <div className="mx-auto max-w-3xl px-4 py-12">
+      <div className="mx-auto max-w-3xl px-4 pt-8 pb-16">
         {/* Tags */}
         {tagList.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
@@ -108,11 +118,10 @@ export default async function BlogPostPage({ params }: Params) {
         <ShareButtons title={post.title} />
 
         <div className="mt-10">
-          <ReactionBar postId={post.id} userId={session?.user?.id} />
-        </div>
-
-        <div className="mt-10">
-          <CommentSection postId={post.id} currentUser={session?.user ?? null} />
+          <CommentSection
+          postId={post.id}
+          currentUser={session?.user ? { id: session.user.id, name: session.user.name, role: session.user.role } : null}
+        />
         </div>
       </div>
     </main>

@@ -36,7 +36,24 @@ export default function BlogEditor({ initialPost }: { initialPost?: InitialPost 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [coverUploading, setCoverUploading] = useState(false);
   const coverRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLInputElement>(null);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const editorRef = useRef<any>(null);
+
+  async function uploadImage(file: File): Promise<string> {
+    const { uploadUrl, publicUrl } = await fetch("/api/upload", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename: file.name, contentType: file.type, size: file.size }),
+    }).then((r) => r.json());
+    await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+    return publicUrl as string;
+  }
+
+  async function insertImageFromFile(file: File) {
+    const url = await uploadImage(file);
+    editorRef.current?.chain().focus().setImage({ src: url }).run();
+  }
 
   const editor = useEditor({
     extensions: [
@@ -50,8 +67,25 @@ export default function BlogEditor({ initialPost }: { initialPost?: InitialPost 
     content: initialPost?.content ?? "",
     editorProps: {
       attributes: { class: "prose prose-lg max-w-none min-h-[400px] focus:outline-none px-0 py-4" },
+      handlePaste(_view, event) {
+        const items = event.clipboardData?.items;
+        if (!items) return false;
+        for (const item of Array.from(items)) {
+          if (item.type.startsWith("image/")) {
+            const file = item.getAsFile();
+            if (file) {
+              insertImageFromFile(file);
+              return true;
+            }
+          }
+        }
+        return false;
+      },
     },
   });
+
+  // Keep ref in sync so paste handler and toolbar always have the latest editor
+  if (editor) editorRef.current = editor;
 
   // Auto-save after 3s of inactivity (only if post already exists)
   const scheduleAutoSave = useCallback(() => {
@@ -70,12 +104,7 @@ export default function BlogEditor({ initialPost }: { initialPost?: InitialPost 
   async function uploadCover(file: File) {
     setCoverUploading(true);
     try {
-      const { uploadUrl, publicUrl } = await fetch("/api/upload", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name, contentType: file.type, size: file.size }),
-      }).then((r) => r.json());
-      await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-      setCoverUrl(publicUrl);
+      setCoverUrl(await uploadImage(file));
     } finally {
       setCoverUploading(false);
     }
@@ -180,7 +209,9 @@ export default function BlogEditor({ initialPost }: { initialPost?: InitialPost 
         {/* Cover photo */}
         <div className="mt-6">
           <input ref={coverRef} type="file" accept="image/*" className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); }} />
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); e.target.value = ""; }} />
+          <input ref={imageRef} type="file" accept="image/*" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) insertImageFromFile(f); e.target.value = ""; }} />
           {coverUrl ? (
             <div className="relative group rounded-xl overflow-hidden mb-6" style={{ maxHeight: 320 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -265,6 +296,12 @@ export default function BlogEditor({ initialPost }: { initialPost?: InitialPost 
               }}
               className={`rounded px-2 py-1 text-xs font-medium transition-colors ${editor.isActive("link") ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}`}>
               🔗 Link
+            </button>
+            <button
+              title="Insert image (or paste one directly)"
+              onMouseDown={(e) => { e.preventDefault(); imageRef.current?.click(); }}
+              className="rounded px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+              🖼 Image
             </button>
           </div>
         )}
