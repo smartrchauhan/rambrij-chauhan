@@ -17,12 +17,10 @@ export default async function Navbar() {
         </Link>
 
         <div className="flex items-center gap-5 ml-4">
-          <Link href="/about" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-            About
-          </Link>
           <Link href="/blog" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
             Blog
           </Link>
+
         </div>
 
         <div className="ml-auto flex items-center gap-3">

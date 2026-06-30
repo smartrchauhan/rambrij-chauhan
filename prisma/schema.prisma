@@ -72,18 +72,54 @@ model SiteContent {
 }
 
 model Highlight {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  type        String
-  url         String?
-  date        DateTime?
-  published   Boolean   @default(true)
-  order       Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            String              @id @default(cuid())
+  title         String
+  description   String?
+  type          String
+  url           String?
+  imageUrl      String?
+  date          DateTime?
+  published     Boolean             @default(true)
+  order         Int                 @default(0)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  eventName     String?
+  keyTakeaways  String?
+  technologies  String?
+  audience      String?
+  impactMetrics String?
+  transcript    String?
+  slidesUrl     String?
+  slides        HighlightSlide[]
+  resources     HighlightResource[]
 
   @@index([published, order])
+}
+
+model HighlightSlide {
+  id          String    @id @default(cuid())
+  highlightId String
+  highlight   Highlight @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  imageUrl    String
+  caption     String?
+  category    String    @default("slide")
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([highlightId, order])
+}
+
+model HighlightResource {
+  id          String    @id @default(cuid())
+  highlightId String
+  highlight   Highlight @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  label       String
+  url         String
+  type        String    @default("link")
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([highlightId, order])
 }
 
 model Reaction {
