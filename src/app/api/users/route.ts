@@ -4,6 +4,19 @@ import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/schemas/user.schema";
 import { rateLimit } from "@/lib/rate-limit";
 
+async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret) return true; // skip verification if not configured
+
+  const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ secret, response: token, remoteip: ip }),
+  });
+  const data = await res.json() as { success: boolean };
+  return data.success;
+}
+
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") ?? "unknown";
   if (!rateLimit(`register:${ip}`, 5, 60 * 60 * 1000)) {
@@ -17,7 +30,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const parsed = registerSchema.safeParse(body);
+  const { captchaToken, ...rest } = body as Record<string, unknown>;
+
+  // Verify CAPTCHA if site key is configured
+  if (process.env.TURNSTILE_SECRET_KEY) {
+    if (!captchaToken || typeof captchaToken !== "string") {
+      return NextResponse.json({ error: "CAPTCHA verification required." }, { status: 400 });
+    }
+    const valid = await verifyTurnstile(captchaToken, ip);
+    if (!valid) {
+      return NextResponse.json({ error: "CAPTCHA verification failed. Please try again." }, { status: 400 });
+    }
+  }
+
+  const parsed = registerSchema.safeParse(rest);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

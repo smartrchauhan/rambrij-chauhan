@@ -42,16 +42,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const data = parsed.data;
-  let updateData: Record<string, unknown> = { ...data };
+  const { coverUrl, tags, ...rest } = parsed.data;
+  let updateData: Record<string, unknown> = { ...rest };
 
-  if (data.content) {
-    updateData.content = sanitizeBlogContent(await marked(data.content));
+  if (rest.content) {
+    updateData.content = sanitizeBlogContent(
+      rest.content.trimStart().startsWith("<") ? rest.content : await marked(rest.content)
+    );
   }
 
-  if (data.published !== undefined) {
-    updateData.publishedAt = data.published ? new Date() : null;
+  if (rest.published !== undefined) {
+    updateData.publishedAt = rest.published ? new Date() : null;
   }
+
+  if (coverUrl !== undefined) updateData.coverUrl = coverUrl || null;
+  if (tags !== undefined) updateData.tags = tags || null;
 
   const post = await prisma.post.update({ where: { id }, data: updateData });
   return NextResponse.json(post);
