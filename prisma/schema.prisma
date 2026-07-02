@@ -51,9 +51,13 @@ model Post {
   comments     Comment[]
   reactions    Reaction[]
 
-  nextPostId   String?
-  nextPost     Post?      @relation("PostNextRead", fields: [nextPostId], references: [id], onDelete: SetNull)
-  suggestedBy  Post[]     @relation("PostNextRead")
+  nextPostId     String?
+  nextPost       Post?      @relation("PostNextRead", fields: [nextPostId], references: [id], onDelete: SetNull)
+  suggestedBy    Post[]     @relation("PostNextRead")
+
+  previousPostId String?
+  previousPost   Post?      @relation("PostPrevRead", fields: [previousPostId], references: [id], onDelete: SetNull)
+  precededBy     Post[]     @relation("PostPrevRead")
 
   @@index([slug])
   @@index([published, publishedAt])

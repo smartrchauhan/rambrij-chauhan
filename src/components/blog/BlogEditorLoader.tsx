@@ -13,6 +13,7 @@ interface InitialPost {
   tags: string | null;
   published: boolean;
   nextPostId?: string | null;
+  previousPostId?: string | null;
 }
 
 interface PostOption {

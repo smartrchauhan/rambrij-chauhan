@@ -52,6 +52,9 @@ export default async function BlogPostPage({ params }: Params) {
         nextPost: {
           select: { slug: true, title: true, excerpt: true, coverUrl: true, published: true },
         },
+        previousPost: {
+          select: { slug: true, title: true, excerpt: true, coverUrl: true, published: true },
+        },
       },
     }),
     auth(),
@@ -66,6 +69,7 @@ export default async function BlogPostPage({ params }: Params) {
   const minutes = readingTime(post.content);
   const tagList = post.tags ? post.tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
   const nextRead = post.nextPost && (post.nextPost.published || session?.user) ? post.nextPost : null;
+  const previousRead = post.previousPost && (post.previousPost.published || session?.user) ? post.previousPost : null;
 
   return (
     <main>
@@ -128,28 +132,54 @@ export default async function BlogPostPage({ params }: Params) {
         {/* Share */}
         <ShareButtons title={post.title} />
 
-        {/* Suggested next read */}
-        {nextRead && (
-          <Link
-            href={`/blog/${nextRead.slug}`}
-            className="mt-10 flex items-center gap-4 rounded-xl border border-gray-200 p-4 hover:border-blue-200 hover:bg-blue-50/50 transition-colors"
-          >
-            {nextRead.coverUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={nextRead.coverUrl}
-                alt={nextRead.title}
-                className="w-20 h-20 rounded-lg object-cover shrink-0"
-              />
+        {/* Series navigation */}
+        {(previousRead || nextRead) && (
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            {previousRead && (
+              <Link
+                href={`/blog/${previousRead.slug}`}
+                className="flex items-center gap-4 rounded-xl border border-gray-200 p-4 hover:border-blue-200 hover:bg-blue-50/50 transition-colors"
+              >
+                {previousRead.coverUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={previousRead.coverUrl}
+                    alt={previousRead.title}
+                    className="w-20 h-20 rounded-lg object-cover shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+                    {!previousRead.published ? "Previous read (draft)" : "Previous read"}
+                  </p>
+                  <p className="mt-1 font-semibold text-gray-900 truncate">{previousRead.title}</p>
+                  <p className="text-sm text-gray-500 truncate">{previousRead.excerpt}</p>
+                </div>
+              </Link>
             )}
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">
-                {!nextRead.published ? "Suggested next read (draft)" : "Suggested next read"}
-              </p>
-              <p className="mt-1 font-semibold text-gray-900 truncate">{nextRead.title}</p>
-              <p className="text-sm text-gray-500 truncate">{nextRead.excerpt}</p>
-            </div>
-          </Link>
+            {nextRead && (
+              <Link
+                href={`/blog/${nextRead.slug}`}
+                className="flex items-center gap-4 rounded-xl border border-gray-200 p-4 hover:border-blue-200 hover:bg-blue-50/50 transition-colors sm:text-right sm:flex-row-reverse"
+              >
+                {nextRead.coverUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={nextRead.coverUrl}
+                    alt={nextRead.title}
+                    className="w-20 h-20 rounded-lg object-cover shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+                    {!nextRead.published ? "Suggested next read (draft)" : "Suggested next read"}
+                  </p>
+                  <p className="mt-1 font-semibold text-gray-900 truncate">{nextRead.title}</p>
+                  <p className="text-sm text-gray-500 truncate">{nextRead.excerpt}</p>
+                </div>
+              </Link>
+            )}
+          </div>
         )}
 
         <div className="mt-10">
