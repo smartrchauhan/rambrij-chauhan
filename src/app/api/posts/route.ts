@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { title, excerpt, content, coverUrl, tags, published } = parsed.data;
+  const { title, excerpt, content, coverUrl, tags, published, nextPostId } = parsed.data;
 
   const htmlContent = sanitizeBlogContent(
     content.trimStart().startsWith("<") ? content : await marked(content)
@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
       tags: tags || null,
       published,
       publishedAt: published ? new Date() : null,
+      nextPostId: nextPostId || null,
     },
   });
 
