@@ -8,6 +8,7 @@ export const createPostSchema = z.object({
   tags: z.string().optional(),
   published: z.boolean().optional().default(false),
   nextPostId: z.string().nullable().optional(),
+  previousPostId: z.string().nullable().optional(),
 });
 
 export const updatePostSchema = createPostSchema.partial().extend({

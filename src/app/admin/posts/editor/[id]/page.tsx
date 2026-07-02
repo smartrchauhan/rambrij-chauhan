@@ -9,7 +9,7 @@ export default async function EditPostEditorPage({ params }: Params) {
   const [post, allPosts] = await Promise.all([
     prisma.post.findUnique({
       where: { id },
-      select: { id: true, title: true, excerpt: true, content: true, coverUrl: true, tags: true, published: true, nextPostId: true },
+      select: { id: true, title: true, excerpt: true, content: true, coverUrl: true, tags: true, published: true, nextPostId: true, previousPostId: true },
     }),
     prisma.post.findMany({
       where: { id: { not: id } },
@@ -31,6 +31,7 @@ export default async function EditPostEditorPage({ params }: Params) {
         tags: post.tags,
         published: post.published,
         nextPostId: post.nextPostId,
+        previousPostId: post.previousPostId,
       }}
     />
   );

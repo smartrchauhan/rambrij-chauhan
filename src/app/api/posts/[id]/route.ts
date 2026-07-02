@@ -42,7 +42,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { coverUrl, tags, nextPostId, ...rest } = parsed.data;
+  const { coverUrl, tags, nextPostId, previousPostId, ...rest } = parsed.data;
   let updateData: Record<string, unknown> = { ...rest };
 
   if (rest.content) {
@@ -59,6 +59,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (tags !== undefined) updateData.tags = tags || null;
   if (nextPostId !== undefined) {
     updateData.nextPostId = nextPostId && nextPostId !== id ? nextPostId : null;
+  }
+  if (previousPostId !== undefined) {
+    updateData.previousPostId = previousPostId && previousPostId !== id ? previousPostId : null;
   }
 
   const post = await prisma.post.update({ where: { id }, data: updateData });
