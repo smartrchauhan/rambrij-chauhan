@@ -12,8 +12,21 @@ interface InitialPost {
   coverUrl: string | null;
   tags: string | null;
   published: boolean;
+  nextPostId?: string | null;
+  previousPostId?: string | null;
 }
 
-export default function BlogEditorLoader({ initialPost }: { initialPost?: InitialPost }) {
-  return <BlogEditor initialPost={initialPost} />;
+interface PostOption {
+  id: string;
+  title: string;
+}
+
+export default function BlogEditorLoader({
+  initialPost,
+  allPosts,
+}: {
+  initialPost?: InitialPost;
+  allPosts: PostOption[];
+}) {
+  return <BlogEditor initialPost={initialPost} allPosts={allPosts} />;
 }
