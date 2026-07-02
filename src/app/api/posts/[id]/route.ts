@@ -42,7 +42,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { coverUrl, tags, nextPostId, previousPostId, ...rest } = parsed.data;
+  const { coverUrl, tags, internalLabel, nextPostId, previousPostId, ...rest } = parsed.data;
   let updateData: Record<string, unknown> = { ...rest };
 
   if (rest.content) {
@@ -57,6 +57,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   if (coverUrl !== undefined) updateData.coverUrl = coverUrl || null;
   if (tags !== undefined) updateData.tags = tags || null;
+  if (internalLabel !== undefined) updateData.internalLabel = internalLabel || null;
   if (nextPostId !== undefined) {
     updateData.nextPostId = nextPostId && nextPostId !== id ? nextPostId : null;
   }
