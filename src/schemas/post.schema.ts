@@ -6,6 +6,7 @@ export const createPostSchema = z.object({
   content: z.string().min(1),
   coverUrl: z.string().url().optional().or(z.literal("")),
   tags: z.string().optional(),
+  internalLabel: z.string().max(100).optional(),
   published: z.boolean().optional().default(false),
   nextPostId: z.string().nullable().optional(),
   previousPostId: z.string().nullable().optional(),

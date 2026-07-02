@@ -11,6 +11,7 @@ interface InitialPost {
   content: string;
   coverUrl: string | null;
   tags: string | null;
+  internalLabel: string | null;
   published: boolean;
   nextPostId?: string | null;
   previousPostId?: string | null;
@@ -19,6 +20,7 @@ interface InitialPost {
 interface PostOption {
   id: string;
   title: string;
+  internalLabel: string | null;
 }
 
 export default function BlogEditorLoader({

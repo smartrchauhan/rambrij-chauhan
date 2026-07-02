@@ -20,6 +20,7 @@ interface InitialPost {
   content: string;
   coverUrl: string | null;
   tags: string | null;
+  internalLabel: string | null;
   published: boolean;
   nextPostId?: string | null;
   previousPostId?: string | null;
@@ -28,6 +29,11 @@ interface InitialPost {
 interface PostOption {
   id: string;
   title: string;
+  internalLabel: string | null;
+}
+
+function postOptionLabel(p: PostOption): string {
+  return p.internalLabel ? `${p.title} — ${p.internalLabel}` : p.title;
 }
 
 export default function BlogEditor({
@@ -43,6 +49,7 @@ export default function BlogEditor({
   const [excerpt, setExcerpt] = useState(initialPost?.excerpt ?? "");
   const [coverUrl, setCoverUrl] = useState(initialPost?.coverUrl ?? "");
   const [tags, setTags] = useState(initialPost?.tags ?? "");
+  const [internalLabel, setInternalLabel] = useState(initialPost?.internalLabel ?? "");
   const [tagInput, setTagInput] = useState("");
   const [published, setPublished] = useState(initialPost?.published ?? false);
   const [nextPostId, setNextPostId] = useState(initialPost?.nextPostId ?? "");
@@ -160,6 +167,7 @@ export default function BlogEditor({
         content: editorContent,
         coverUrl,
         tags,
+        internalLabel,
         published: publishState,
         nextPostId: nextPostId || null,
         previousPostId: previousPostId || null,
@@ -303,6 +311,20 @@ export default function BlogEditor({
           </div>
         </div>
 
+        {/* Internal label */}
+        <div className="mb-6">
+          <label htmlFor="internalLabel" className="block text-xs font-medium text-slate-500 mb-1">
+            Internal label <span className="font-normal text-slate-400">(admin only — helps tell apart posts that share a title, e.g. in a series)</span>
+          </label>
+          <input
+            id="internalLabel"
+            value={internalLabel}
+            onChange={(e) => { setInternalLabel(e.target.value); scheduleAutoSave(); }}
+            placeholder="e.g. Part 1, Draft v2…"
+            className="w-full max-w-sm text-sm text-slate-700 placeholder-slate-300 border border-slate-200 rounded-md px-3 py-1.5 outline-none focus:border-blue-300 bg-white"
+          />
+        </div>
+
         {/* Series links */}
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-6">
           <div className="flex items-center gap-2">
@@ -317,7 +339,7 @@ export default function BlogEditor({
             >
               <option value="">None</option>
               {allPosts.map((p) => (
-                <option key={p.id} value={p.id}>{p.title}</option>
+                <option key={p.id} value={p.id}>{postOptionLabel(p)}</option>
               ))}
             </select>
           </div>
@@ -333,7 +355,7 @@ export default function BlogEditor({
             >
               <option value="">None</option>
               {allPosts.map((p) => (
-                <option key={p.id} value={p.id}>{p.title}</option>
+                <option key={p.id} value={p.id}>{postOptionLabel(p)}</option>
               ))}
             </select>
           </div>
