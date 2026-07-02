@@ -4,7 +4,7 @@ import Link from "next/link";
 export default async function AdminDashboard() {
   const posts = await prisma.post.findMany({
     orderBy: { createdAt: "desc" },
-    select: { id: true, title: true, slug: true, published: true, createdAt: true },
+    select: { id: true, title: true, slug: true, published: true, createdAt: true, internalLabel: true },
   });
 
   return (
@@ -35,7 +35,14 @@ export default async function AdminDashboard() {
             <tbody className="divide-y divide-gray-100">
               {posts.map((post) => (
                 <tr key={post.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900">{post.title}</td>
+                  <td className="px-6 py-4 font-medium text-gray-900">
+                    {post.title}
+                    {post.internalLabel && (
+                      <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-normal text-gray-500">
+                        {post.internalLabel}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
