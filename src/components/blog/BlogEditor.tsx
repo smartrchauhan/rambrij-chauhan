@@ -21,9 +21,21 @@ interface InitialPost {
   coverUrl: string | null;
   tags: string | null;
   published: boolean;
+  nextPostId?: string | null;
 }
 
-export default function BlogEditor({ initialPost }: { initialPost?: InitialPost }) {
+interface PostOption {
+  id: string;
+  title: string;
+}
+
+export default function BlogEditor({
+  initialPost,
+  allPosts = [],
+}: {
+  initialPost?: InitialPost;
+  allPosts?: PostOption[];
+}) {
   const router = useRouter();
   const [postId, setPostId] = useState<string | null>(initialPost?.id ?? null);
   const [title, setTitle] = useState(initialPost?.title ?? "");
@@ -32,6 +44,7 @@ export default function BlogEditor({ initialPost }: { initialPost?: InitialPost 
   const [tags, setTags] = useState(initialPost?.tags ?? "");
   const [tagInput, setTagInput] = useState("");
   const [published, setPublished] = useState(initialPost?.published ?? false);
+  const [nextPostId, setNextPostId] = useState(initialPost?.nextPostId ?? "");
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [coverUploading, setCoverUploading] = useState(false);
@@ -128,7 +141,7 @@ export default function BlogEditor({ initialPost }: { initialPost?: InitialPost 
     setTags(tagList().filter((t) => t !== tag).join(","));
   }
 
-  async function doSave(shouldPublish?: boolean, isAuto = false) {
+  async function doSave(shouldPublish?: boolean, isAuto = false): Promise<string | undefined> {
     const editorContent = editor?.getHTML() ?? "";
     const isNew = !postId;
     const publishState = shouldPublish !== undefined ? shouldPublish : published;
@@ -146,9 +159,10 @@ export default function BlogEditor({ initialPost }: { initialPost?: InitialPost 
         coverUrl,
         tags,
         published: publishState,
+        nextPostId: nextPostId || null,
       };
 
-      let id = postId;
+      let slug: string | undefined;
       if (isNew) {
         const res = await fetch("/api/posts", {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -156,24 +170,41 @@ export default function BlogEditor({ initialPost }: { initialPost?: InitialPost 
         });
         if (!res.ok) throw new Error();
         const created = await res.json();
-        id = created.id;
-        setPostId(id);
-        router.replace(`/admin/posts/editor/${id}`);
+        slug = created.slug;
+        setPostId(created.id);
+        router.replace(`/admin/posts/editor/${created.id}`);
       } else {
-        const res = await fetch(`/api/posts/${id}`, {
+        const res = await fetch(`/api/posts/${postId}`, {
           method: "PATCH", headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
         if (!res.ok) throw new Error();
+        const updated = await res.json();
+        slug = updated.slug;
       }
 
       setPublished(publishState);
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
+      return slug;
     } catch {
       setSaveStatus("error");
+      return undefined;
     } finally {
       setSaving(false);
+    }
+  }
+
+  const [previewing, setPreviewing] = useState(false);
+  async function handlePreview() {
+    setPreviewing(true);
+    const tab = window.open("about:blank", "_blank");
+    try {
+      const slug = await doSave(undefined, false);
+      if (slug && tab) tab.location.href = `/blog/${slug}`;
+      else tab?.close();
+    } finally {
+      setPreviewing(false);
     }
   }
 
@@ -191,6 +222,10 @@ export default function BlogEditor({ initialPost }: { initialPost?: InitialPost 
         {saveStatus === "saving" && <span className="text-xs text-slate-400">Saving…</span>}
         {saveStatus === "saved" && <span className="text-xs text-green-600">Saved ✓</span>}
         {saveStatus === "error" && <span className="text-xs text-red-600">Save failed</span>}
+        <button onClick={handlePreview} disabled={saving || previewing || !title.trim()}
+          className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+          {previewing ? "Opening…" : "Preview"}
+        </button>
         <button onClick={() => doSave(false)} disabled={saving || !title.trim()}
           className="rounded-lg border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
           Save Draft
@@ -263,6 +298,24 @@ export default function BlogEditor({ initialPost }: { initialPost?: InitialPost 
               className="text-xs text-slate-500 placeholder-slate-300 border-none outline-none bg-transparent w-32"
             />
           </div>
+        </div>
+
+        {/* Suggested next read */}
+        <div className="flex items-center gap-2 mb-6">
+          <label htmlFor="nextPostId" className="text-xs font-medium text-slate-500 shrink-0">
+            Suggested next read
+          </label>
+          <select
+            id="nextPostId"
+            value={nextPostId}
+            onChange={(e) => { setNextPostId(e.target.value); scheduleAutoSave(); }}
+            className="text-sm text-slate-700 border border-slate-200 rounded-md px-2 py-1 bg-white outline-none focus:border-blue-300"
+          >
+            <option value="">None</option>
+            {allPosts.map((p) => (
+              <option key={p.id} value={p.id}>{p.title}</option>
+            ))}
+          </select>
         </div>
 
         <hr className="border-slate-100 mb-4" />

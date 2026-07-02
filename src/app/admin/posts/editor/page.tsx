@@ -1,5 +1,11 @@
+import { prisma } from "@/lib/prisma";
 import BlogEditorLoader from "@/components/blog/BlogEditorLoader";
 
-export default function NewPostEditorPage() {
-  return <BlogEditorLoader />;
+export default async function NewPostEditorPage() {
+  const allPosts = await prisma.post.findMany({
+    orderBy: { createdAt: "desc" },
+    select: { id: true, title: true },
+  });
+
+  return <BlogEditorLoader allPosts={allPosts} />;
 }

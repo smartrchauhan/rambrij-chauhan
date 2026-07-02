@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import type { Metadata } from "next";
 import CommentSection from "@/components/blog/CommentSection";
 import BlogContent from "@/components/blog/BlogContent";
@@ -48,18 +49,23 @@ export default async function BlogPostPage({ params }: Params) {
       select: {
         id: true, title: true, excerpt: true, content: true,
         coverUrl: true, tags: true, publishedAt: true, published: true,
+        nextPost: {
+          select: { slug: true, title: true, excerpt: true, coverUrl: true, published: true },
+        },
       },
     }),
     auth(),
   ]);
 
-  if (!post || !post.published) notFound();
+  if (!post) notFound();
+  if (!post.published && !session?.user) notFound();
 
   const date = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
     : null;
   const minutes = readingTime(post.content);
   const tagList = post.tags ? post.tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
+  const nextRead = post.nextPost && (post.nextPost.published || session?.user) ? post.nextPost : null;
 
   return (
     <main>
@@ -77,6 +83,20 @@ export default async function BlogPostPage({ params }: Params) {
       )}
 
       <div className="mx-auto max-w-3xl px-4 pt-8 pb-16">
+        {!post.published && (
+          <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3">
+            <span className="text-sm font-medium text-yellow-800">
+              This post is a draft and is only visible to you.
+            </span>
+            <Link
+              href={`/admin/posts/editor/${post.id}`}
+              className="shrink-0 text-sm font-medium text-blue-600 hover:underline"
+            >
+              Edit
+            </Link>
+          </div>
+        )}
+
         {/* Tags */}
         {tagList.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
@@ -107,6 +127,30 @@ export default async function BlogPostPage({ params }: Params) {
 
         {/* Share */}
         <ShareButtons title={post.title} />
+
+        {/* Suggested next read */}
+        {nextRead && (
+          <Link
+            href={`/blog/${nextRead.slug}`}
+            className="mt-10 flex items-center gap-4 rounded-xl border border-gray-200 p-4 hover:border-blue-200 hover:bg-blue-50/50 transition-colors"
+          >
+            {nextRead.coverUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={nextRead.coverUrl}
+                alt={nextRead.title}
+                className="w-20 h-20 rounded-lg object-cover shrink-0"
+              />
+            )}
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+                {!nextRead.published ? "Suggested next read (draft)" : "Suggested next read"}
+              </p>
+              <p className="mt-1 font-semibold text-gray-900 truncate">{nextRead.title}</p>
+              <p className="text-sm text-gray-500 truncate">{nextRead.excerpt}</p>
+            </div>
+          </Link>
+        )}
 
         <div className="mt-10">
           <CommentSection

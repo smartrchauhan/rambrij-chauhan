@@ -7,6 +7,7 @@ export const createPostSchema = z.object({
   coverUrl: z.string().url().optional().or(z.literal("")),
   tags: z.string().optional(),
   published: z.boolean().optional().default(false),
+  nextPostId: z.string().nullable().optional(),
 });
 
 export const updatePostSchema = createPostSchema.partial().extend({
