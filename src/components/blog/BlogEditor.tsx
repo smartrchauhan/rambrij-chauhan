@@ -144,7 +144,7 @@ export default function BlogEditor({
   }
 
   async function doSave(shouldPublish?: boolean, isAuto = false): Promise<string | undefined> {
-    const editorContent = editor?.getHTML() ?? "";
+    const editorContent = editorRef.current?.getHTML() ?? "";
     const isNew = !postId;
     const publishState = shouldPublish !== undefined ? shouldPublish : published;
 
