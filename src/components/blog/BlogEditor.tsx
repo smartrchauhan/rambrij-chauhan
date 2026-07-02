@@ -22,6 +22,7 @@ interface InitialPost {
   tags: string | null;
   published: boolean;
   nextPostId?: string | null;
+  previousPostId?: string | null;
 }
 
 interface PostOption {
@@ -45,6 +46,7 @@ export default function BlogEditor({
   const [tagInput, setTagInput] = useState("");
   const [published, setPublished] = useState(initialPost?.published ?? false);
   const [nextPostId, setNextPostId] = useState(initialPost?.nextPostId ?? "");
+  const [previousPostId, setPreviousPostId] = useState(initialPost?.previousPostId ?? "");
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [coverUploading, setCoverUploading] = useState(false);
@@ -142,7 +144,7 @@ export default function BlogEditor({
   }
 
   async function doSave(shouldPublish?: boolean, isAuto = false): Promise<string | undefined> {
-    const editorContent = editor?.getHTML() ?? "";
+    const editorContent = editorRef.current?.getHTML() ?? "";
     const isNew = !postId;
     const publishState = shouldPublish !== undefined ? shouldPublish : published;
 
@@ -160,6 +162,7 @@ export default function BlogEditor({
         tags,
         published: publishState,
         nextPostId: nextPostId || null,
+        previousPostId: previousPostId || null,
       };
 
       let slug: string | undefined;
@@ -300,22 +303,40 @@ export default function BlogEditor({
           </div>
         </div>
 
-        {/* Suggested next read */}
-        <div className="flex items-center gap-2 mb-6">
-          <label htmlFor="nextPostId" className="text-xs font-medium text-slate-500 shrink-0">
-            Suggested next read
-          </label>
-          <select
-            id="nextPostId"
-            value={nextPostId}
-            onChange={(e) => { setNextPostId(e.target.value); scheduleAutoSave(); }}
-            className="text-sm text-slate-700 border border-slate-200 rounded-md px-2 py-1 bg-white outline-none focus:border-blue-300"
-          >
-            <option value="">None</option>
-            {allPosts.map((p) => (
-              <option key={p.id} value={p.id}>{p.title}</option>
-            ))}
-          </select>
+        {/* Series links */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-6">
+          <div className="flex items-center gap-2">
+            <label htmlFor="previousPostId" className="text-xs font-medium text-slate-500 shrink-0">
+              Previous read
+            </label>
+            <select
+              id="previousPostId"
+              value={previousPostId}
+              onChange={(e) => { setPreviousPostId(e.target.value); scheduleAutoSave(); }}
+              className="text-sm text-slate-700 border border-slate-200 rounded-md px-2 py-1 bg-white outline-none focus:border-blue-300"
+            >
+              <option value="">None</option>
+              {allPosts.map((p) => (
+                <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="nextPostId" className="text-xs font-medium text-slate-500 shrink-0">
+              Suggested next read
+            </label>
+            <select
+              id="nextPostId"
+              value={nextPostId}
+              onChange={(e) => { setNextPostId(e.target.value); scheduleAutoSave(); }}
+              className="text-sm text-slate-700 border border-slate-200 rounded-md px-2 py-1 bg-white outline-none focus:border-blue-300"
+            >
+              <option value="">None</option>
+              {allPosts.map((p) => (
+                <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <hr className="border-slate-100 mb-4" />
